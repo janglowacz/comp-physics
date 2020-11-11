@@ -14,36 +14,43 @@ def FLUSH(i,I):
 
 # Ising Hamiltonian
 def Hamiltonian(s,J,h):
-    H_ext = -h * np.sum(s)
-    H_int = -J * np.sum(s*np.roll(s,1)) # add factor 2 to include double counting
+    '''1-dim Ising Hamiltonian'''
+    H_ext = -h * np.sum(s) # part of Hamiltonian coupling to external field
+    H_int = -J * np.sum(s*np.roll(s,1)) # part of Hamiltonian that couples spins to one another; you may add factor 2 to include double counting
     return H_int + H_ext
 
 
 # Boltzmann factor
 def bf(s, T, J, h):
+    '''The Boltzmann factor'''
     return np.exp(-Hamiltonian(s,J,h)/T)
 
 
 # Random Sping Configuration Generator
 def spin_config(N):
+    '''Generate random configuration of N spins'''
     return np.random.choice((-1,+1),int(N))
 
 
 # Monte Carlo sampler
 def MC_s(sample_size, N, T, J, h):
-    '''Monte Carlo sampler'''
+    '''Monte Carlo sampler for the 1-dim Ising model;
+       Takes sample size, number of spins N, temperature T and couplings J and h;
+       Returns average magnetization per spin;'''
     num, den = 0, 0
-    for i in range(int(sample_size)):
-        s = spin_config(N)
-        BF = bf(s,T,J,h)
-        num += s.sum() * BF
-        den += BF
-    return (num/den)/N
-vMC_s = np.vectorize(MC_s)
+    for i in range(int(sample_size)): # loop over samples
+        s = spin_config(N) # generate random spin configuration
+        BF = bf(s,T,J,h) # calculate Boltzmann weight
+        num += s.sum() * BF # magnetization with Boltzmann weight ( = the contribution to the sum in numerator of equation 3)
+        den += BF # contribution to partition function Z
+    return (num/den)/N # return average magnetization per spin
+vMC_s = np.vectorize(MC_s) # vectorize function, so we can use it with numpy arrays
 
 
 def Exact(N, T, J, h):
-    '''Numeric calculator for the exact solution'''
+    '''Numeric calculator for the exact solution of the 1-dim Ising model;
+       Takes number of spins N, temperature T and couplings J and h;
+       Returns average magnetization per spin;'''
     num, den = 0, 0
     size = np.power(2,N) # number of possible spin configs
     i = 0
@@ -91,6 +98,7 @@ print("T:",T)
 print("J:",J)
 print("h:",H,"(varying from",-1,"to",1,")")
 
+# ==============================================================================================================================
 
 # calculation of Monte-Carlo simulations for varying number of spins (n)
 print("\n"+"="*100+"\nvarying N")
@@ -119,11 +127,12 @@ plt.plot(n,d,label="therm limit",color="C4")
 
 plt.legend(loc="best")
 plt.grid()
-plt.xlabel(r"$N$")
+plt.xlabel("N")
 plt.ylabel(r"$\langle m\rangle$")
 plt.savefig("varN.pdf")
 plt.close()
 
+# ==============================================================================================================================
 
 # calculation of Monte-Carlo simulations for varying (coupling to) external field (h)
 print("\n\n"+"="*100+"\nvarying h")
@@ -152,26 +161,27 @@ plt.plot(h,d,label="therm limit",color="C4")
 
 plt.legend(loc="best")
 plt.grid()
-plt.xlabel(r"$h$")
+plt.xlabel("h")
 plt.ylabel(r"$\langle m\rangle$")
 plt.savefig("varh.pdf")
 plt.close()
 
+# ==============================================================================================================================
 
 # calculation of Monte-Carlo simulations for varying number of spins (n) AND varying (coupling to) external field (h)
 print("\n\n"+"="*100+"\nvarying both")
 n = np.linspace(1,N,N) # create array of different n
 h = np.linspace(-1,1,100) # create array of different h
 a,b = np.meshgrid(n, h)
-m = mExactN(a,J,b) # calculate exact solution analitically
+m = mExactM(a,J,b) # calculate exact solution analitically
 
 # plot exact solution
 plt.pcolormesh(n,h,m,cmap="viridis",rasterized=True)
 
 cbar = plt.colorbar()
 cbar.set_label(r"$\langle m\rangle$")
-plt.xlabel(r"$N$")
-plt.ylabel(r"$h$")
+plt.xlabel("N")
+plt.ylabel("h")
 plt.tight_layout()
 plt.savefig("2dplot.pdf")
 plt.close()
@@ -188,8 +198,8 @@ plt.pcolormesh(n,h,m2,cmap="viridis",rasterized=True)
 
 cbar = plt.colorbar()
 cbar.set_label(r"$\langle m\rangle$")
-plt.xlabel(r"$N$")
-plt.ylabel(r"$h$")
+plt.xlabel("N")
+plt.ylabel("h")
 plt.tight_layout()
 plt.savefig("2dplot_2.pdf")
 plt.close()
@@ -201,13 +211,14 @@ m3 = np.abs((m-m2)) # calculate difference between exact solution and MC results
 plt.pcolormesh(n,h,m3,cmap="viridis",rasterized=True)
 
 cbar = plt.colorbar()
-cbar.set_label(r"$\langle m\rangle$")
-plt.xlabel(r"$N$")
-plt.ylabel(r"$h$")
+cbar.set_label("<m>")
+plt.xlabel("N")
+plt.ylabel("h")
 plt.tight_layout()
 plt.savefig("2dplot_rel.pdf")
 plt.close()
 
+# ==============================================================================================================================
 
 # test of the 3 exact solutions
 print("\n"+"="*100+"\ntest of the exact solutions")
@@ -224,7 +235,7 @@ plt.plot(n,d,label="therm limit")
 
 plt.legend(loc="best")
 plt.grid()
-plt.xlabel(r"$N$")
+plt.xlabel("N")
 plt.ylabel(r"$\langle m\rangle$")
 plt.savefig("exTest.pdf")
 plt.close()
