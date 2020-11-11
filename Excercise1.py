@@ -173,7 +173,7 @@ print("\n\n"+"="*100+"\nvarying both")
 n = np.linspace(1,N,N) # create array of different n
 h = np.linspace(-1,1,100) # create array of different h
 a,b = np.meshgrid(n, h)
-m = mExactM(a,J,b) # calculate exact solution analitically
+m = mExactN(a,J,b) # calculate exact solution analitically
 
 # plot exact solution
 plt.pcolormesh(n,h,m,cmap="viridis",rasterized=True)
