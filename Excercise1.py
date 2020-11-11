@@ -55,7 +55,7 @@ def Exact(N, T, J, h):
     size = np.power(2,N) # number of possible spin configs
     i = 0
     while(i<size): # loop over all possible spin configs
-        s = np.array(list(np.binary_repr(i, width=int(N))), dtype=int)*2-1 # create spin config
+        s = np.array(list(np.binary_repr(i, width=int(N))), dtype=int)*2-1 # create spin config by converting number of spin config in binary representation
         EZ = bf(s,T,J,h) # Boltzmann factor
         num += s.sum() * EZ 
         den += EZ # partition function
