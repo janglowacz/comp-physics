@@ -6,8 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import special
 
-# V-0.2
-
 def artH(p,phi,settings):
     N, J, h, beta = settings
     S = np.square(phi)/(2*beta*J) - N*np.log(2*np.cosh(beta*h+phi))
@@ -61,7 +59,7 @@ def HMC(phi,N_md,N_therm,N_cfg,settings=(10,0.25,0.5,1),nbs=100):
 
     # Obervables
     m = np.tanh(beta*h+phi)
-    e = - (np.square(phi/beta)/(2*N*J) + h*m)
+    e = - (np.square(phi/beta)/(2*N*J) + h*m - 1/(2*N*beta))
 
     return m.mean(), e.mean(), acceptance, bootstrap(m,nbs), bootstrap(e,nbs)
 
@@ -106,19 +104,15 @@ def FLUSH(F,T,Text,Finish=False):
 
 # ====================================================================================================================================================================
 
-phi = 10
+phi = 5
 N_md = 1
-N_therm = 2000
-N_cfg = 5000
+N_therm = 1000
+N_cfg = 2000
 
-N = 5
+N = 12
 J_vals = np.linspace(0.2,2,91) #91
 h = 0.5
 beta = 1
-
-#y = [HMC(phi,N_md,N_therm,N_cfg,settings=(N,J,h,beta)) for J in J_vals]
-#y = np.array(y)
-#m, e, a = y[:,0], y[:,1], y[:,2]
 
 y = []
 for J in J_vals:
@@ -135,28 +129,55 @@ m, e, a, m_err, e_err = y[:,0], y[:,1], y[:,2], y[:,3], y[:,4]
 y_ex = np.array([exact(N,J,h,beta) for J in J_vals])
 m_ex, e_ex = y_ex[:,0], y_ex[:,1]
 
-plt.figure(figsize=(9,6))
-plt.errorbar(J_vals,m,yerr=m_err,fmt='x',capsize=3)
-plt.plot(J_vals,m_ex,'.')
+plt.errorbar(J_vals,m,yerr=m_err,fmt='.',capsize=3)
+plt.plot(J_vals,m_ex)
 plt.xlabel('J')
 plt.ylabel(r'$\langle m\rangle$')
 plt.grid()
 plt.savefig(f'varJ_m_{N}.pdf')
 plt.close()
 
-plt.figure(figsize=(9,6))
-plt.errorbar(J_vals,e,yerr=e_err,fmt='x',capsize=3)
-plt.plot(J_vals,e_ex,'.')
+plt.errorbar(J_vals,e,yerr=e_err,fmt='.',capsize=3)
+plt.plot(J_vals,e_ex)
 plt.xlabel('J')
 plt.ylabel(r'$\langle e\rangle$')
 plt.grid()
 plt.savefig(f'varJ_e_{N}.pdf')
 plt.close()
 
-plt.figure(figsize=(9,6))
-plt.plot(J_vals,a,'x')
+plt.plot(J_vals,a,'.')
 plt.xlabel('J')
 plt.ylabel('Acceptance')
 plt.grid()
 plt.savefig(f'varJ_a_{N}.pdf')
+plt.close()
+
+print()
+
+y = []
+N_md = 1
+y.append(HMC(phi,N_md,N_therm,N_cfg,settings=(N,J_vals[0],h,beta)))
+while y[-1][2]<0.5:
+    N_md += 1
+    y.append(HMC(phi,N_md,N_therm,N_cfg,settings=(N,J_vals[0],h,beta)))
+FLUSH(1,time.time()-time0,"J: {:.2f}, N_md: {:.0f}, Acceptance: {:.2f},".format(J_vals[0],N_md,y[-1][2]),Finish=True)
+
+plt.plot(np.linspace(1,len(y),len(y)),[x[2] for x in y],'o')
+plt.xlabel('N_md')
+plt.ylabel('Acceptance')
+plt.grid()
+plt.savefig(f'N_md_{N}.pdf')
+plt.close()
+
+# Task 3
+
+N_md = np.linspace(1,100,100)
+Values = np.array([np.abs((artH(*leapfrog(1,phi,int(n),settings=(N,J_vals[0],h,beta)),settings=(N,J_vals[0],h,beta))-artH(1,phi,settings=(N,J_vals[0],h,beta)))/artH(1,phi,settings=(N,J_vals[0],h,beta))) for n in N_md])
+
+plt.plot(N_md,Values,'.')
+plt.yscale('log')
+plt.xlabel('N_md')
+plt.ylabel('Leapfrog accuracy')
+plt.grid()
+plt.savefig('Leapfrog_acc.pdf')
 plt.close()
